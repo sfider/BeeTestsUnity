@@ -28,6 +28,8 @@ public class FPS : MonoBehaviour
     private float[] fps = new float[60];
     private int fpsIdx;
     private float timeSincelastUpdate = 10f;
+
+    private FrameTiming[] _frameTimings = new FrameTiming[60];
     
     void Update()
     {
@@ -67,7 +69,25 @@ public class FPS : MonoBehaviour
             fpsMean += f;
         }
         fpsMean /= fps.Length;
-        text.SetText(count+"\n"+fpsMean.ToString("0.0"));
+
+        uint timingsNum = FrameTimingManager.GetLatestTimings((uint)_frameTimings.Length, _frameTimings);
+        if (timingsNum > 0) {
+            double cpuMean = 0.0f;
+            double renderMean = 0.0f;
+            double gpuMean = 0.0f;
+            for (int timingIdx = 0; timingIdx < timingsNum; ++timingIdx) {
+                FrameTiming timing = _frameTimings[timingIdx];
+                cpuMean += timing.cpuFrameTime;
+                renderMean += timing.cpuRenderThreadFrameTime;
+                gpuMean += timing.gpuFrameTime;
+            }
+            cpuMean /= timingsNum;
+            renderMean /= timingsNum;
+            gpuMean /= timingsNum;
+            text.SetText($"num: {count}\nfps: {fpsMean:F2}\ncpu: {cpuMean:F2}ms\nrt: {renderMean:F2}ms\ngpu: {gpuMean:F2}ms");
+        } else {
+            text.SetText($"num: {count}\nfps: {fpsMean:F2}");
+        }
     }
 
     public static void SetCount(int count)
