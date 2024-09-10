@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
@@ -11,9 +9,13 @@ public class FPS : MonoBehaviour
     public float updateEveryXSeconds = .5f;
 
     private int count = 0;
-    static private FPS _instence;
+    private static FPS _instence;
+    
     private void Awake()
     {
+        Application.targetFrameRate = 60;
+        System.Array.Fill(fps, 60.0f);
+        
         if (_instence)
         {
             Destroy(gameObject);
@@ -23,8 +25,10 @@ public class FPS : MonoBehaviour
     }
 
     // Update is called once per frame
-    float fps = 60;
-    float timeSincelastUpdate = 10f;
+    private float[] fps = new float[60];
+    private int fpsIdx;
+    private float timeSincelastUpdate = 10f;
+    
     void Update()
     {
         for (int i = 0; i < 10; i++)
@@ -46,9 +50,9 @@ public class FPS : MonoBehaviour
                 QualitySettings.vSyncCount=0;
         }
 
-
-        fps = Mathf.Lerp(fps, 1f / Mathf.Max(.0001f,Time.smoothDeltaTime), .01f);
-
+        fps[fpsIdx] = 1.0f / Time.deltaTime;
+        fpsIdx = (fpsIdx + 1) % fps.Length;
+        
         timeSincelastUpdate += Time.deltaTime;
         if (timeSincelastUpdate>=updateEveryXSeconds)
         {
@@ -57,8 +61,13 @@ public class FPS : MonoBehaviour
         else {
             return; 
         }
-
-        text.SetText(count+"\n"+fps.ToString("0.0"));
+        
+        float fpsMean = 0.0f;
+        foreach (float f in fps) {
+            fpsMean += f;
+        }
+        fpsMean /= fps.Length;
+        text.SetText(count+"\n"+fpsMean.ToString("0.0"));
     }
 
     public static void SetCount(int count)
